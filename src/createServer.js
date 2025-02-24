@@ -3,9 +3,9 @@ const { convertToCase } = require('./convertToCase');
 
 const validCases = new Set(['SNAKE', 'KEBAB', 'CAMEL', 'PASCAL', 'UPPER']);
 
-function handleErrors(res, errors) {
-  res.writeHead(400, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ errors }));
+function sendResponse(res, status, data) {
+  res.writeHead(status, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(data));
 }
 
 function createServer() {
@@ -30,7 +30,9 @@ function createServer() {
           // eslint-disable-next-line max-len
           '"toCase" query param is required. Correct request is: "/<TEXT_TO_CONVERT>?toCase=<CASE_NAME>".',
       });
-    } else if (!validCases.has(toCase)) {
+    }
+
+    if (toCase && !validCases.has(toCase)) {
       errors.push({
         message:
           // eslint-disable-next-line max-len
@@ -39,24 +41,18 @@ function createServer() {
     }
 
     if (errors.length) {
-      return handleErrors(res, errors);
+      return sendResponse(res, 400, { errors });
     }
 
     const result = convertToCase(text, toCase);
 
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-
-    res.end(
-      JSON.stringify({
-        originalCase: result.originalCase,
-        targetCase: toCase,
-        originalText: text,
-        convertedText: result.convertedText,
-      }),
-    );
+    sendResponse(res, 200, {
+      originalCase: result.originalCase,
+      targetCase: toCase,
+      originalText: text,
+      convertedText: result.convertedText,
+    });
   });
 }
 
-module.exports = {
-  createServer,
-};
+module.exports = { createServer };
